@@ -45,7 +45,7 @@
   window.React ??= await loadJs(`https://esm.sh/react@${REACT_VERSION}?bundle`, "React");
   window.ReactDOM ??= await loadJs(`https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`, "ReactDOM");
   if (!window.tailwindcss) {
-    await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind v4 Play-CDN"
+    await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind v4 Play-CDN");
   }
   window.chadcn ??= await loadJs(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/+esm`, "shadcn/ui bundle");
 
