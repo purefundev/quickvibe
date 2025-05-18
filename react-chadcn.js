@@ -48,13 +48,23 @@
   const reactDomUrl = `https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`;
   window.React ??= (await loadJs(reactUrl, "React")).default ?? (await import(reactUrl)).default;
   window.ReactDOM ??= (await loadJs(reactDomUrl, "ReactDOM")).default ?? (await import(reactDomUrl)).default;
+
+  // optional Babel runtime so users can author JSX directly
+  if (BABEL_ENABLED && !window.Babel) {
+    await loadJs(`https://cdn.jsdelivr.net/npm/@babel/standalone@${BABEL_VERSION}/babel.min.js`, "Babel Standalone");   
+    /*  -- disable broken worker & compile inline tags synchronously -- */
+    Babel.disableScriptPreload = true; // skip prefetch
+    // Transform every <script type="text/babel"> that isn't done yet
+    Babel.transformScriptTags({
+      noWorker: true, // <- MAIN THREAD compile (CSP-safe)
+      presets: ['react'],
+    });
+  }
+
   if (!window.tailwindcss) {
     await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind Play-CDN");
   }
-  // optional Babel runtime so users can author JSX directly
-  if (BABEL_ENABLED && !window.Babel) {
-    await loadJs(`https://cdn.jsdelivr.net/npm/@babel/standalone@${BABEL_VERSION}/babel.min.js`, "Babel Standalone (dev-only)");
-  }
+
   window.chadcn ??= await loadJs(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/+esm`, "shadcn/ui bundle");
 
   // --- tiny error overlay ---------------------------------------------
