@@ -1,8 +1,13 @@
-/* qickvibe/react-chadcn.js
+/* quickvibe/react-chadcn.js
    – Loads React, ReactDOM, shadcn/ui, Tailwind
    – Adds a minimalist, collapsible error overlay with copy-to-clipboard
 */
 (async () => {
+  // --- config ---------------------------------------------------------
+  const REACT_VERSION = "19.1.0";
+  const TAILWIND_VERSION = "4";
+  const SHADCN_VERSION = "0.0.8";
+
   // --- helpers ---------------------------------------------------------
   const loadCss = (href) =>
     new Promise((ok, err) => {
@@ -17,53 +22,41 @@
     });
 
   // --- libs ------------------------------------------------------------
-  if (!window.React)
-    window.React = await import("https://esm.sh/react@18.3.1?bundle");
-
-  if (!window.ReactDOM)
-    window.ReactDOM = await import(
-      "https://esm.sh/react-dom@18.3.1/client?bundle"
-    );
-
-  await loadCss(
-    "https://cdn.jsdelivr.net/gh/llmjoi/loader@latest/dist/global.css"
-  );
-
-  if (!window.chadcn)
-    window.chadcn = await import(
-      "https://cdn.jsdelivr.net/gh/llmjoi/loader@latest/dist/shadcn.bundle.js"
-    );
+  window.React    ??= await import(`https://esm.sh/react@${REACT_VERSION}?bundle`);
+  window.ReactDOM ??= await import(`https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`);
+  if (!window.tailwindcss) {
+    await import(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`);
+  } 
+  await loadCss(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/style.css`);   
+  window.chadcn ??= await import(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/+esm`);
 
   // --- tiny error overlay ---------------------------------------------
   const { createRoot } = ReactDOM;
   const { Card, CardHeader, CardContent, Button } = chadcn;
   const el = React.createElement;                 // alias for brevity
-
   const host = Object.assign(document.createElement("div"), {
     id: "quickvibe-error-overlay-root",
   });
   document.body.appendChild(host);
-
   function Overlay() {
     const { useState, useEffect } = React;
     const [errs, setErrs] = useState([]);
     const [open, setOpen] = useState(false);
-
     useEffect(() => {
       const push = (t) => {
         setErrs((e) => [t, ...e]);
         setOpen(true);
       };
-      addEventListener("error",        (m,u,l,c,e)=>push(e?e.stack||e.toString():m));
-      addEventListener("unhandledrejection", (e)=>push(e?.reason?e.reason.stack||e.reason.toString():e.toString()));
+      const onErr = (m,u,l,c,e)=>push(e ? e.stack || e.toString() : m);
+      addEventListener("error", onErr);
+      const onRej = (e)=>push(e?.reason ? e.reason.stack || e.reason.toString() : e.toString());
+      addEventListener("unhandledrejection", onRej);
       return () => {
         removeEventListener("error", onErr);
         removeEventListener("unhandledrejection", onRej);
       };
     }, []);
-
     if (!errs.length) return null;
-
     return el(
       "div",
       { className: "fixed bottom-2 left-2 right-2 z-50 text-xs" },
@@ -122,7 +115,6 @@
       )
     );
   }
-
   createRoot(host).render(el(Overlay));
 
   // --------------------------------------------------------------------
