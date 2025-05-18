@@ -7,6 +7,8 @@
   const REACT_VERSION = "19.1.0";
   const TAILWIND_VERSION = "4";
   const SHADCN_VERSION = "0.0.8";
+  const BABEL_ENABLED = !window.__QUICKVIBE_NO_BABEL__;
+  const BABEL_VERSION = "7";
 
   // --- helpers ---------------------------------------------------------
   const loadCss = (href) =>
@@ -45,7 +47,11 @@
   window.React ??= await loadJs(`https://esm.sh/react@${REACT_VERSION}?bundle`, "React");
   window.ReactDOM ??= await loadJs(`https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`, "ReactDOM");
   if (!window.tailwindcss) {
-    await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind v4 Play-CDN");
+    await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind Play-CDN");
+  }
+  // optional Babel runtime so users can author JSX directly
+  if (BABEL_ENABLED && !window.Babel) {
+    await loadJs(`https://cdn.jsdelivr.net/npm/@babel/standalone@${BABEL_VERSION}/babel.min.js`, "Babel Standalone (dev-only)");
   }
   window.chadcn ??= await loadJs(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/+esm`, "shadcn/ui bundle");
 
