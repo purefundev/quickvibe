@@ -44,8 +44,8 @@
   }
 
   // --- libs ------------------------------------------------------------
-  window.React ??= await loadJs(`https://esm.sh/react@${REACT_VERSION}?bundle`, "React");
-  window.ReactDOM ??= await loadJs(`https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`, "ReactDOM");
+  window.React ??= (await loadJs(reactUrl, "React")).default ?? await import(reactUrl);
+  window.ReactDOM ??= (await loadJs(reactDomUrl,"ReactDOM")).default ?? await import(reactDomUrl);
   if (!window.tailwindcss) {
     await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind Play-CDN");
   }
