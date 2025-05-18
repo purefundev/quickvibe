@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QuickVibe — Live-coded UI</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- ─────────────────────────  HIDDEN LLM PROMPT  ─────────────────────────
+    Produce ONE complete HTML document.
+      · Leave the <script id="app" …> in place and fill it with your JSX.
+      · Babel Stand-alone (loaded by the QuickVibe runtime) will compile that
+        JSX on the MAIN THREAD, so no Web-Worker is required (CSP-safe).
+      · React 19, React-DOM 19, Tailwind 4 runtime and the full shadcn/ui
+        bundle are already on window:
+          React  → window.React
+          ReactDOM → window.ReactDOM
+          shadcn components → window.shadcn
+    Return a single ```html fenced block — no commentary outside the fence.
+  ───────────────────────────────────────────────────────────────────────────-->
+
+  <!-- QuickVibe runtime (React 19 + Tailwind 4 + shadcn/ui + overlay) -->
+  <script type="module"
+          src="https://cdn.jsdelivr.net/gh/purefundev/quickvibe@latest/react-shadcn.js"
+          defer></script>
+
+  <style>
+    body{margin:0;font-family:system-ui,sans-serif;background:#f8f9fa}
+    #root{min-height:100vh;display:flex;align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+  <div id="root">Loading…</div>
+
+  <!-- Write / overwrite this block. JSX is OK (Babel compiles inline). -->
+  <script id="app" type="text/babel" data-presets="react">
+    const { createRoot } = ReactDOM;
+
+    function App() {
+      const [count, setCount] = React.useState(0);
+      return (
+        <main className="flex flex-col items-center gap-4">
+          <h1 className="text-3xl font-bold">QuickVibe counter</h1>
+          <button
+            className="px-4 py-2 rounded bg-sky-600 text-white hover:bg-sky-700"
+            onClick={() => setCount(c => c + 1)}
+          >
+            Increment
+          </button>
+          <p className="text-xl font-mono">{count}</p>
+        </main>
+      );
+    }
+
+    createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
