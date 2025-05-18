@@ -58,92 +58,113 @@
   window.chadcn ??= await loadJs(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/+esm`, "shadcn/ui bundle");
 
   // --- tiny error overlay ---------------------------------------------
-  const { createRoot } = ReactDOM;
-  const { Card, CardHeader, CardContent, Button } = chadcn;
-  const el = React.createElement;                 // alias for brevity
-  const host = Object.assign(document.createElement("div"), {
-    id: "quickvibe-error-overlay-root",
-  });
-  document.body.appendChild(host);
-  function Overlay() {
-    const { useState, useEffect } = React;
-    const [errs, setErrs] = useState([]);
-    const [open, setOpen] = useState(false);
-    useEffect(() => {
-      const push = (t) => {
-        setErrs((e) => [t, ...e]);
-        setOpen(true);
-      };
-      const onErr = (m,u,l,c,e)=>push(e ? e.stack || e.toString() : m);
-      addEventListener("error", onErr);
-      const onRej = (e)=>push(e?.reason ? e.reason.stack || e.reason.toString() : e.toString());
-      addEventListener("unhandledrejection", onRej);
-      return () => {
-        removeEventListener("error", onErr);
-        removeEventListener("unhandledrejection", onRej);
-      };
-    }, []);
-    if (!errs.length) return null;
-    return el(
-      "div",
-      { className: "fixed bottom-2 left-2 right-2 z-50 text-xs" },
-      el(
-        Card,
-        { className: "max-h-[40vh] overflow-auto" },
-        el(
-          CardHeader,
-          { className: "flex items-center justify-between" },
-          el("span", { className: "font-medium" }, `Errors (${errs.length})`),
-          el(
-            "div",
-            { className: "flex gap-1" },
-            // copy button
-            el(
-              Button,
-              {
-                variant: "outline",
-                size: "icon",
-                title: "Copy errors",
-                onClick: () => navigator.clipboard.writeText(errs.join("\n\n")),
-              },
-              el(
-                "svg",
-                { viewBox: "0 0 24 24", className: "h-4 w-4" },
-                el("path", {
-                  d: "M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v16h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 18H8V7h11v16Z",
-                  fill: "currentColor",
-                })
-              )
-            ),
-            // toggle button
-            el(
-              Button,
-              {
-                variant: "outline",
-                size: "sm",
-                onClick: () => setOpen((o) => !o),
-              },
-              open ? "Hide" : "Show"
-            )
-          )
-        ),
-        open &&
-          el(
-            CardContent,
-            { className: "space-y-2" },
-            errs.map((e, i) =>
-              el(
-                "pre",
-                { key: i, className: "whitespace-pre-wrap break-all" },
-                e
-              )
-            )
-          )
+  (() => {
+    const errs = [];
+    let open  = false;
+   
+    // host container
+    const host = document.body.appendChild(
+      Object.assign(document.createElement("div"), {
+        id:  "quickvibe-error-overlay-root",
+        className:
+          "fixed bottom-2 left-2 right-2 z-50 text-xs space-y-0.5 font-sans",
+      })
+    );
+   
+    // card shell (Tailwind utility classes only)
+    const card = host.appendChild(
+      Object.assign(document.createElement("div"), {
+        className:
+          "max-h-[40vh] overflow-auto rounded-lg border border-slate-300/60 " +
+          "bg-white/90 backdrop-blur shadow dark:bg-slate-800/80 " +
+          (open ? "" : "hidden"),
+      })
+    );
+   
+    // header: title + buttons
+    const hdr = card.appendChild(
+      Object.assign(document.createElement("div"), {
+        className:
+          "flex items-center justify-between px-3 py-2 border-b " +
+          "border-slate-200 dark:border-slate-700",
+      })
+    );
+   
+    const title = hdr.appendChild(
+      Object.assign(document.createElement("span"), {
+        className: "font-medium",
+        textContent: "Errors (0)",
+      })
+    );
+   
+    // helper to make a tiny neutral button
+    const btn = (svgPath, aria, onClick) => {
+      const b = Object.assign(document.createElement("button"), {
+        className:
+          "h-6 w-6 flex items-center justify-center rounded border " +
+          "border-slate-300 hover:bg-slate-100 dark:border-slate-600 " +
+          "dark:hover:bg-slate-700 focus:outline-none",
+        ariaLabel: aria,
+        onclick: onClick,
+      });
+      b.innerHTML = `<svg viewBox="0 0 24 24" class="h-4 w-4">
+                       <path d="${svgPath}" fill="currentColor"/>
+                     </svg>`;
+      return b;
+    };
+   
+    // copy-to-clipboard
+    hdr.appendChild(
+      btn(
+        "M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v16h14" +
+          "a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 18H8V7h11v16Z",
+        "Copy errors",
+        () => navigator.clipboard.writeText(errs.join("\n\n"))
       )
     );
-  }
-  createRoot(host).render(el(Overlay));
+   
+    // show/hide
+    const toggleBtn = hdr.appendChild(
+      btn("M6 9l6 6 6-6", "Toggle overlay", () => toggle(!open))
+    );
+   
+    // log container
+    const body = card.appendChild(
+      Object.assign(document.createElement("div"), {
+        className: "p-3 space-y-2",
+      })
+    );
+   
+    function push(e) {
+      errs.unshift(e);
+      title.textContent = `Errors (${errs.length})`;
+      const pre = Object.assign(document.createElement("pre"), {
+        className: "whitespace-pre-wrap break-all",
+        textContent: e,
+      });
+      body.prepend(pre);
+      toggle(true);
+    }
+   
+    function toggle(state) {
+      open = state;
+      card.classList.toggle("hidden", !open);
+      // flip chevron  (up/down)
+      toggleBtn.firstElementChild.setAttribute(
+        "d",
+        open ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"
+      );
+    }
+   
+    addEventListener("error", (m, u, l, c, e) =>
+      push(e ? e.stack || e.toString() : m)
+    );
+    addEventListener("unhandledrejection", (e) =>
+      push(
+        e?.reason ? e.reason.stack || e.reason.toString() : e.toString()
+      )
+    );
+  })();
 
-  // --------------------------------------------------------------------
   document.dispatchEvent(new CustomEvent("quickvibe:ready"));
 })();
