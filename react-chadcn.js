@@ -13,7 +13,7 @@
   // --- helpers ---------------------------------------------------------
   const loadCss = (href) =>
      new Promise((resolve) => {
-       if (document.querySelector(`link[href="${href}"]`)) return ok();
+       if (document.querySelector(`link[href="${href}"]`)) return resolve();
        const link = Object.assign(document.createElement("link"), {
          rel: "stylesheet",
          href,
@@ -44,8 +44,10 @@
   }
 
   // --- libs ------------------------------------------------------------
-  window.React ??= (await loadJs(reactUrl, "React")).default ?? await import(reactUrl);
-  window.ReactDOM ??= (await loadJs(reactDomUrl,"ReactDOM")).default ?? await import(reactDomUrl);
+  const reactUrl = `https://esm.sh/react@${REACT_VERSION}?bundle`;
+  const reactDomUrl = `https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`;
+  window.React ??= (await loadJs(reactUrl, "React")).default ?? (await import(reactUrl)).default;
+  window.ReactDOM ??= (await loadJs(reactDomUrl, "ReactDOM")).default ?? (await import(reactDomUrl)).default;
   if (!window.tailwindcss) {
     await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind Play-CDN");
   }
