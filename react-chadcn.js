@@ -36,15 +36,11 @@
 
   // --- tiny error overlay ---------------------------------------------
   const { createRoot } = ReactDOM;
-  const {
-    Card,
-    CardHeader,
-    CardContent,
-    Button,
-  } = chadcn;
+  const { Card, CardHeader, CardContent, Button } = chadcn;
+  const el = React.createElement;                 // alias for brevity
 
   const host = Object.assign(document.createElement("div"), {
-    id: "llmjoi-error-overlay-root",
+    id: "quickvibe-error-overlay-root",
   });
   document.body.appendChild(host);
 
@@ -58,15 +54,8 @@
         setErrs((e) => [t, ...e]);
         setOpen(true);
       };
-      const onErr = (m, u, l, c, e) =>
-        push(e ? e.stack || e.toString() : m);
-      const onRej = (e) =>
-        push(
-          e?.reason ? e.reason.stack || e.reason.toString() : e.toString()
-        );
-
-      addEventListener("error", onErr);
-      addEventListener("unhandledrejection", onRej);
+      addEventListener("error",        (m,u,l,c,e)=>push(e?e.stack||e.toString():m));
+      addEventListener("unhandledrejection", (e)=>push(e?.reason?e.reason.stack||e.reason.toString():e.toString()));
       return () => {
         removeEventListener("error", onErr);
         removeEventListener("unhandledrejection", onRej);
@@ -75,57 +64,66 @@
 
     if (!errs.length) return null;
 
-    return (
-      <div className="fixed bottom-2 left-2 right-2 z-50 text-xs">
-        <Card className="max-h-[40vh] overflow-auto">
-          <CardHeader className="flex items-center justify-between">
-            <span className="font-medium">Errors&nbsp;({errs.length})</span>
-            <div className="flex gap-1">
-              {/* copy */}
-              <Button
-                variant="outline"
-                size="icon"
-                title="Copy errors"
-                onClick={() =>
-                  navigator.clipboard.writeText(errs.join("\n\n"))
-                }
-              >
-                <svg viewBox="0 0 24 24" className="h-4 w-4">
-                  <path
-                    d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v16h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 18H8V7h11v16Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </Button>
-              {/* toggle */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setOpen((o) => !o)}
-              >
-                {open ? "Hide" : "Show"}
-              </Button>
-            </div>
-          </CardHeader>
-
-          {open && (
-            <CardContent className="space-y-2">
-              {errs.map((e, i) => (
-                <pre
-                  key={i}
-                  className="whitespace-pre-wrap break-all"
-                >
-                  {e}
-                </pre>
-              ))}
-            </CardContent>
-          )}
-        </Card>
-      </div>
+    return el(
+      "div",
+      { className: "fixed bottom-2 left-2 right-2 z-50 text-xs" },
+      el(
+        Card,
+        { className: "max-h-[40vh] overflow-auto" },
+        el(
+          CardHeader,
+          { className: "flex items-center justify-between" },
+          el("span", { className: "font-medium" }, `Errors (${errs.length})`),
+          el(
+            "div",
+            { className: "flex gap-1" },
+            // copy button
+            el(
+              Button,
+              {
+                variant: "outline",
+                size: "icon",
+                title: "Copy errors",
+                onClick: () => navigator.clipboard.writeText(errs.join("\n\n")),
+              },
+              el(
+                "svg",
+                { viewBox: "0 0 24 24", className: "h-4 w-4" },
+                el("path", {
+                  d: "M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v16h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 18H8V7h11v16Z",
+                  fill: "currentColor",
+                })
+              )
+            ),
+            // toggle button
+            el(
+              Button,
+              {
+                variant: "outline",
+                size: "sm",
+                onClick: () => setOpen((o) => !o),
+              },
+              open ? "Hide" : "Show"
+            )
+          )
+        ),
+        open &&
+          el(
+            CardContent,
+            { className: "space-y-2" },
+            errs.map((e, i) =>
+              el(
+                "pre",
+                { key: i, className: "whitespace-pre-wrap break-all" },
+                e
+              )
+            )
+          )
+      )
     );
   }
 
-  createRoot(host).render(React.createElement(Overlay));
+  createRoot(host).render(el(Overlay));
 
   // --------------------------------------------------------------------
   document.dispatchEvent(new CustomEvent("quickvibe:ready"));
