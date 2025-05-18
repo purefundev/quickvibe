@@ -10,25 +10,44 @@
 
   // --- helpers ---------------------------------------------------------
   const loadCss = (href) =>
-    new Promise((ok, err) => {
-      if (document.querySelector(`link[href="${href}"]`)) return ok();
-      const link = Object.assign(document.createElement("link"), {
-        rel: "stylesheet",
-        href,
-        onload: ok,
-        onerror: err,
-      });
-      document.head.appendChild(link);
-    });
+     new Promise((resolve) => {
+       if (document.querySelector(`link[href="${href}"]`)) return ok();
+       const link = Object.assign(document.createElement("link"), {
+         rel: "stylesheet",
+         href,
+         onload: ok,
+         onerror: () => {
+           console.warn(
+             `%cquickvibe%c failed to load CSS → ${href}`,
+             "background:#0ea5e9;color:#fff;padding:2px 4px;border-radius:4px",
+             ""
+           );
+           resolve();
+         },
+       });
+       document.head.appendChild(link);
+     });
+
+  async function loadJs(url, label = url) {
+    try {
+      return await import(url);
+    } catch (e) {
+      console.error(
+        `%cquickvibe%c failed to load ${label}\n${e}`,
+        "background:#ef4444;color:#fff;padding:2px 4px;border-radius:4px",
+        ""
+      );
+      throw e;
+    }
+  }
 
   // --- libs ------------------------------------------------------------
-  window.React    ??= await import(`https://esm.sh/react@${REACT_VERSION}?bundle`);
-  window.ReactDOM ??= await import(`https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`);
+  window.React ??= await loadJs(`https://esm.sh/react@${REACT_VERSION}?bundle`, "React");
+  window.ReactDOM ??= await loadJs(`https://esm.sh/react-dom@${REACT_VERSION}/client?bundle`, "ReactDOM");
   if (!window.tailwindcss) {
-    await import(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`);
-  } 
-  await loadCss(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/style.css`);   
-  window.chadcn ??= await import(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/+esm`);
+    await loadJs(`https://cdn.jsdelivr.net/npm/@tailwindcss/browser@${TAILWIND_VERSION}`, "Tailwind v4 Play-CDN"
+  }
+  window.chadcn ??= await loadJs(`https://cdn.jsdelivr.net/npm/shadcdn@${SHADCN_VERSION}/+esm`, "shadcn/ui bundle");
 
   // --- tiny error overlay ---------------------------------------------
   const { createRoot } = ReactDOM;
